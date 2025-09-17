@@ -1,0 +1,22 @@
+ FFmpeg Commands Integrated into Services
+All FFmpeg commands are integrated into the app/services/video_processing.py file using the ffmpeg-python library. Here are the core commands you have implemented:
+
+Get Metadata: ffprobe -v error -show_format -show_streams [input_file]
+
+This command is used to read the video's metadata, such as duration and file size, without decoding the entire file.
+
+Trimming: ffmpeg -i [input_file] -ss [start_time] -to [end_time] -c copy [output_file]
+
+This efficiently creates a trimmed clip by copying the video stream without re-encoding, which is very fast.
+
+Text Overlay (with Indian Language Support): ffmpeg -i [input_file] -vf "drawtext=text='Your Text':x=(w-text_w)/2:y=(h-text_h)/2:fontsize=60:fontcolor=white:fontfile='font.ttf':enable='between(t,start,end)'" [output_file]
+
+This command renders text onto the video. It is configured to place large, white text in the center and uses an external font file, which enables support for Devanagari and other scripts.
+
+Watermarking (Resized): ffmpeg -i [input_file] -i [logo_file] -filter_complex "[1:v]scale=iw/10:-1[wm];[0:v][wm]overlay=W-w-10:H-h-10" [output_file]
+
+This advanced command first resizes the watermark image to be 1/10th of the video's width, then overlays it onto the bottom-right corner.
+
+Transcoding (Changing Quality): ffmpeg -i [input_file] -vf "scale=-2:[height]" -preset fast -vcodec libx264 [output_file]
+
+This command re-encodes the video to a new resolution (e.g., 720p height) to create different quality versions.
