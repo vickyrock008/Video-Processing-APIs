@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database Service
+  db:
+    image: postgres:13
+    container_name: video_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=2003
+      - POSTGRES_DB=video
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  # Redis Service for Celery
+  redis:
+    image: redis:6.2-alpine
+    container_name: video_redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  # FastAPI Backend Service
+  backend:
+    build: ./backend # Path to the Dockerfile
+    container_name: video_backend
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    volumes:
+      - ./backend:/app
+      - ./backend/media:/app/media # Mount the media folder
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+    environment:
+      - DATABASE_URL=postgresql://postgres:2003@db/video # Connect to the 'db' service
+
+  # Celery Worker Service
+  worker:
+    build: ./backend
+    container_name: video_worker
+    command: celery -A app.tasks worker --loglevel=info
+    volumes:
+      - ./backend:/app
+      - ./backend/media:/app/media
+    depends_on:
+      - redis
+      - db
+
+volumes:
+  postgres_data:
